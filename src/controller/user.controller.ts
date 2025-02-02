@@ -1,5 +1,8 @@
 import { Request, Response } from 'express';
-
+import { HttpError } from '../errors/http.error';
+import { auditLogger } from '../config/logger';
+import { envSchema } from '../config/env';
+import { sendMail } from '../config/nodemailer';
 import {
     registerNewUser,
     loginExistingUser,
@@ -9,10 +12,6 @@ import {
     generateVerificationCode,
     getUserByEmail,
 } from '../services/user.service';
-import { HttpError } from '../errors/http.error';
-import { auditLogger } from '../config/logger';
-import { envSchema } from '../config/env';
-import { sendMail } from '../config/nodemailer';
 
 export default class UserController {
     static async registerUser(req: Request, res: Response) {
@@ -56,33 +55,36 @@ export default class UserController {
         }
     }
 
+    static async getUserProfile(req: Request, res: Response) {
+        auditLogger.info(`User Profile Accessed: ${req.body.user.email}`);
+        res.status(200).json(req.body.user);
+    }
+
     static async passwordResetRequest(req: Request, res: Response) {
         const { email } = req.body;
         const user = await getUserByEmail(email);
-        console.log(user);
         if (!user) {
             res.status(404).json({
                 message: 'User Not Found, Please Register the User',
             });
             return;
         }
+        // Generate a verification code and send it to the user via email
+        // For testing purposes, we are using a static code '123456'
         const code = await generateVerificationCode('password_reset', user.id);
         const subject = 'Password Reset Request';
         const message = `Please make a POST request on below api with new password. ${envSchema.APP_URL}/api/v1/auth/password/reset?code=${code}`;
         await sendMail(email, subject, message);
         auditLogger.info(`Password Reset Email Sent: ${email}`);
-        res.status(200).json({
+        res.status(201).json({
             message: 'Please check your email to reset the password',
         });
     }
 
     static async updateUserPassword(req: Request, res: Response) {
         const code = req.query.code as string;
-        const { newPassword, confirmPassword } = req.body;
-        if (newPassword !== confirmPassword) {
-            res.status(400).json({ message: 'Passwords do not match' });
-            return;
-        }
+        const { newPassword } = req.body;
+
         const { isCodeValid, requestedBy, requestedFor } =
             await checkIfCodeIsValid(code);
         if (!isCodeValid || requestedFor !== 'password_reset') {

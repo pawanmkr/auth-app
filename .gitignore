@@ -23,6 +23,7 @@ pids
 .env
 .env.local
 .env.*.local
+.env.test
 
 # Dependency directories
 .DS_Store

@@ -9,7 +9,9 @@ export const errorHandlingMiddleware = (
     res: Response,
     next: NextFunction
 ) => {
-    if (error instanceof HttpError) {
+    if ('code' in error && error.code === 'EBADCSRFTOKEN') {
+        res.status(403).json({ message: 'Invalid CSRF Token' });
+    } else if (error instanceof HttpError) {
         res.status(error.status).json({ message: error.message });
     } else {
         res.status(500).json({ message: 'Internal Server Error' });

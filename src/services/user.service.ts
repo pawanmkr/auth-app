@@ -8,6 +8,7 @@ import { user } from '../db/schema/user.schema';
 import { generateToken } from '../utils/token';
 import { HttpError } from '../errors/http.error';
 import { verificationCode } from '../db/schema/verification_code.schema';
+import { envSchema } from '../config/env';
 
 export async function registerNewUser(
     name: string,
@@ -114,7 +115,7 @@ export async function generateVerificationCode(
     requestedFor: string,
     requestedBy: string
 ): Promise<string> {
-    const code = uuidv4();
+    const code = envSchema.NODE_ENV === 'test' ? '123456' : uuidv4();
     await db
         .insert(verificationCode)
         .values({

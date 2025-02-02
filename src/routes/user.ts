@@ -1,20 +1,44 @@
 import express from 'express';
 import UserController from '../controller/user.controller';
+import authLimiter from '../middlewares/rate_limiter.middleware';
 import { authorizationMiddleware as authorizeRequest } from '../middlewares/authorization.middleware';
-import { auditLogger } from '../config/logger';
+import {
+    loginUserValidation,
+    registerUserValidation,
+    passwordResetRequestValidation,
+    updateUserPasswordValidation,
+} from '../validations/auth.validation';
+import onlyAdminsAllowed from '../middlewares/admin.middleware';
 
 export const authRouter = express.Router();
 
-// Unprotected Routes
-authRouter.post('/register', UserController.registerUser);
-authRouter.post('/login', UserController.loginUser);
+authRouter
+    // Unprotected Routes
+    .post(
+        '/register',
+        authLimiter,
+        registerUserValidation,
+        UserController.registerUser
+    )
+    .post('/login', authLimiter, loginUserValidation, UserController.loginUser)
 
-// Protected Routes
-authRouter.get('/user/profile', authorizeRequest, (req, res) => {
-    auditLogger.info(`User Profile Accessed: ${req.body.user.email}`);
-    res.status(200).json(req.body.user);
-});
+    // Protected Routes
+    .get('/user/profile', authorizeRequest, UserController.getUserProfile)
 
-// Password Reset Routes
-authRouter.post('/password/reset/request', UserController.passwordResetRequest);
-authRouter.put('/password/reset', UserController.updateUserPassword);
+    // Password Reset Routes
+    .post(
+        '/password/reset/request',
+        authLimiter,
+        authorizeRequest,
+        onlyAdminsAllowed, // Only Admins can request password reset
+        passwordResetRequestValidation,
+        UserController.passwordResetRequest
+    )
+    .put(
+        '/password/reset',
+        authLimiter,
+        authorizeRequest,
+        onlyAdminsAllowed, // Only Admins can request password reset
+        updateUserPasswordValidation,
+        UserController.updateUserPassword
+    );
