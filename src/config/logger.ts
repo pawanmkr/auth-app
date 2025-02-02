@@ -1,6 +1,7 @@
 import pino from 'pino';
 import fs from 'fs';
 import path from 'path';
+
 import { envSchema } from '../config/env';
 
 // Get absolute path of logs directory parallel to src
@@ -15,14 +16,19 @@ export const accessLogStream = fs.createWriteStream(
     { flags: 'a' }
 );
 
-// Create a writable file stream for audit logs
+// Create writable file streams for audit and app logs
 const auditLogStream = fs.createWriteStream(path.join(logsDir, 'audit.log'), {
     flags: 'a',
 });
 
-const logger = pino(
+const appLogStream = fs.createWriteStream(path.join(logsDir, 'app.log'), {
+    flags: 'a',
+});
+
+// Create Pino logger for audit logs
+export const auditLogger = pino(
     {
-        level: envSchema.LOG_LEVEL,
+        level: envSchema.LOG_LEVEL || 'info',
         timestamp: pino.stdTimeFunctions.isoTime,
         formatters: {
             level: (label) => ({ level: label }),
@@ -31,4 +37,14 @@ const logger = pino(
     auditLogStream
 );
 
-export default logger;
+// Create Pino logger for app logs
+export const appLogger = pino(
+    {
+        level: envSchema.LOG_LEVEL || 'info',
+        timestamp: pino.stdTimeFunctions.isoTime,
+        formatters: {
+            level: (label) => ({ level: label }),
+        },
+    },
+    appLogStream
+);

@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { JsonWebTokenError, JwtPayload } from 'jsonwebtoken';
 
 import { verifyToken } from '../utils/token';
-import { getUserById } from '../service/user.service';
+import { getUserById } from '../services/user.service';
 
 export const authorizationMiddleware = async (
     req: Request,

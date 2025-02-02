@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 
-import { accessLogStream } from './utils/logger';
+import { accessLogStream } from './config/logger';
 import { authRouter } from './routes/user';
 import { errorHandlingMiddleware } from './middlewares/error_handler.middleware';
 

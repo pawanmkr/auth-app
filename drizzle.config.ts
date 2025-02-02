@@ -5,7 +5,7 @@ export default defineConfig({
     out: './migrations',
     schema: [
         './src/db/schema/user.schema.ts',
-        './src/db/schema/otp_request.schema.ts',
+        './src/db/schema/verification_code.schema.ts',
     ],
     dialect: 'postgresql',
     dbCredentials: {
